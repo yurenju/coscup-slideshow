@@ -17,12 +17,20 @@ def download():
         key=lambda item: item['updated'],reverse=True)[:10]
 
     for item in migration:
-        filename = item['updated'] + '.jpg';
+        filename = 'images/' + item['updated'] + '.jpg';
+        url = None
         if os.path.exists(filename):
             print "%s exist" % filename
             continue
-        url = [n for n in item['links'] if n['type'] == 'image/jpeg'][0]['href']
+        links = [n for n in item['links'] if n['type'] == 'image/jpeg']
+        if len(links) > 0:
+	    url = links[0]['href']
+        if item.has_key('enclosures'):
+            enclosures = [n for n in item['enclosures'] if n['type'] == 'image/jpeg']
+            if len(enclosures) > 0:
+                url = enclosures[0]['href']
 
+        if url == None: continue
         print "download %s" % filename
         remote = urllib.urlopen(url)
         file = open(filename, 'w')
@@ -31,6 +39,8 @@ def download():
         file.close()
 
 def main():
+    if not os.path.exists ('images'):
+        os.mkdirs('images')
     sleep_time = 30
     while(True):
         download()
