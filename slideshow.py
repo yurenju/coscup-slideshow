@@ -4,7 +4,7 @@ import clutter
 import os
 
 image_dir = 'images'
-interval = 5000
+interval = 2000
 maxium = 5
 
 class Slideshow:
@@ -12,6 +12,10 @@ class Slideshow:
         self.stage = clutter.Stage()
         self.stage.set_color(clutter.Color(0,0,0,255))
         self.files = sorted(os.listdir(image_dir))
+        print self.files
+        if len(self.files) > maxium:
+            self.files = self.files[maxium*-1:]
+        print self.files
         self.load_files()
         self.texture = None
         self.previous = None
@@ -36,6 +40,7 @@ class Slideshow:
 
         views = self.imageviews[maxium:]
         for v in views:
+            self.imageviews.remove(v)
             v.destroy()
 
     def append_files(self):
@@ -64,10 +69,7 @@ class Slideshow:
     def load_files(self):
         self.imageviews = []
         for f in self.files:
-            if self.files.index(f) > maxium:
-                break
-            else:
-                self.load_file(f)
+            self.load_file(f)
 
     def play(self, animation, pos=0):
         if pos >= len(self.imageviews):
