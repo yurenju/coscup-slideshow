@@ -40,7 +40,7 @@ def download():
 
 def main():
     if not os.path.exists ('images'):
-        os.mkdirs('images')
+        os.makedirs('images')
     sleep_time = 30
     while(True):
         download()
