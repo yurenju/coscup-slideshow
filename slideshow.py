@@ -2,10 +2,13 @@
 
 import clutter
 import os
+import gobject
 
 image_dir = 'images'
 interval = 2000
 maxium = 5
+width = 1024
+height = 768
 
 class Slideshow:
     def __init__(self):
@@ -19,6 +22,14 @@ class Slideshow:
         self.previous = None
         self.stage.show()
         self.stage.connect('destroy', clutter.main_quit)
+        
+
+    def start(self):
+        self.stage.set_width(width)
+        self.stage.set_height(height)
+        self.stage.set_fullscreen(True)
+        self.load_files()
+        self.play(None, pos=len(self.files)-1)
 
     def get_scale(self, actor):
         method = None
@@ -100,8 +111,7 @@ class Slideshow:
 
 def main():
     slideshow = Slideshow()
-    slideshow.load_files()
-    slideshow.play(None, pos=len(slideshow.files)-1)
+    gobject.timeout_add(10, slideshow.start)
     clutter.main()
 
 if __name__ == '__main__':
