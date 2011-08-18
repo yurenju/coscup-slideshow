@@ -48,6 +48,9 @@ class Slideshow:
 
         ds = getattr(self.stage, method)()
         da = getattr(actor, method)()
+        
+        if da == 0:
+            return 0
         return ds*ratio/da
 
     def destroy_remain(self):
