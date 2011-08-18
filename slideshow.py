@@ -14,22 +14,29 @@ class Slideshow:
     def __init__(self):
         self.stage = clutter.Stage()
         self.stage.set_color(clutter.Color(0,0,0,255))
-        self.files = sorted(os.listdir(image_dir))
+        
+        self.files = []
+        files = sorted(os.listdir(image_dir))
+        for f in files:
+            item = {}
+            item['filename'] = f
+            item['texture'] = None
+            self.files.append(item)
+            
         if len(self.files) > maxium:
             self.files = self.files[maxium*-1:]
-        self.load_files()
-        self.texture = None
+
+        self.current = None
         self.previous = None
         self.stage.show()
         self.stage.connect('destroy', clutter.main_quit)
-        
 
     def start(self):
         self.stage.set_width(width)
         self.stage.set_height(height)
         self.stage.set_fullscreen(True)
         self.load_files()
-        self.play(None, pos=len(self.files)-1)
+        self.play(None)
 
     def get_scale(self, actor):
         method = None
@@ -44,67 +51,68 @@ class Slideshow:
         return ds*ratio/da
 
     def destroy_remain(self):
-        if len(self.imageviews) < maxium:
+        if len(self.files) < maxium:
             return;
-
-        views = self.imageviews[:-1*maxium]
-        for v in views:
-            self.imageviews.remove(v)
-            v.destroy()
+            
+        for item in self.files[:maxium*-1]:
+            if item['texture'] != None:
+                item['texture'].destroy()
+        del self.files[:maxium*-1]
 
     def append_files(self):
-        last = self.files[len(self.files)-1]
-        files = sorted(os.listdir(image_dir), reverse=True)
+        last = self.files[-1]
+        files = sorted(os.listdir(image_dir))
 
-        if len(files) > 0 and files[0] != last:
-            tmp = []
-            for f in files:
-                if f != last:
-                    tmp.insert(0, f)
-                else:
-                    break;
-            self.files = self.files + tmp
-            if len(self.files) > maxium:
-                self.files = self.files[maxium*-1:]
-            for f in tmp:
-                self.load_file(f)
+        if len(files) > 0 and files[-1] != last['filename']:
+            i = files.index(last['filename'])
+            for f in files[i+1:]:
+                item = {}
+                item['filename'] = f
+                item['texture'] = self.load_file(item['filename'])
+                self.files.append(item)
+                
             self.destroy_remain()
             return True
         else:
             return False
 
-    def load_file(self, f):
-        texture = clutter.Texture("%s/%s" % (image_dir, f))
+    def load_file(self, filename):
+        texture = clutter.Texture("%s/%s" % (image_dir, filename))
         texture.set_anchor_point_from_gravity(clutter.GRAVITY_CENTER)
         texture.set_x(self.stage.get_width()/2)
         texture.set_y(self.stage.get_height()/2)
         scale = self.get_scale(texture)
         texture.set_scale(scale, scale)
         texture.set_opacity(0)
-        self.imageviews.append(texture)
+        return texture
     
     def load_files(self):
-        self.imageviews = []
         for f in self.files:
-            self.load_file(f)
+            f['texture'] = self.load_file(f['filename'])
 
-    def play(self, animation, pos=0):
+    def get_index(self, f):
+        return self.files.index(f)
+
+    def play(self, animation):
         ret = self.append_files()
-        if pos < 0 or ret:
-            pos = len(self.files)-1
+        if self.current != None:
+            self.previous = self.current
+            self.previous['texture'].detach_animation()
+            anim = self.previous['texture'].animate (clutter.LINEAR, interval, "opacity", 0)
+            anim.connect('completed', self.remove_texture, self.previous['texture'])
 
-        self.pos = pos
-        if self.texture != None:
-            self.previous = self.texture
-            self.previous.detach_animation()
-            anim = self.previous.animate (clutter.LINEAR, interval, "opacity", 0)
-            anim.connect('completed', self.remove_texture, self.previous)
+        if self.current == None or ret or self.get_index(self.current) < 1:
+            self.current = self.files[-1]
+        else:
+            index = self.get_index(self.current)
+            self.current = self.files[index-1]
 
-        print "total: %s, current: %s" % (len(self.files), pos)
-        self.texture = self.imageviews[pos]
-        self.stage.add(self.texture)
-        anim = self.texture.animate (clutter.LINEAR, interval, "opacity", 255)
-        anim.connect('completed', self.play, pos-1)
+        print "(%s/%s) - %s" % (self.files.index(self.current), \
+                len(self.files), self.current['filename'])
+
+        self.stage.add(self.current['texture'])
+        anim = self.current['texture'].animate (clutter.LINEAR, interval, "opacity", 255)
+        anim.connect('completed', self.play)
 
     def remove_texture(self, animation, actor):
         actor.get_parent().remove(actor)
