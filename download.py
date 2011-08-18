@@ -8,7 +8,7 @@ import params
 from xml.etree.ElementTree import Element, dump 
 
 limit = 50
-tag = 'coscup2010'
+tag = 'coscup2011'
 picasa_url = 'https://picasaweb.google.com/data/feed/base/all?alt=rss&kind=photo&access=public&q=%s&hl=en_US' % tag
 
 def normalize(data):
