@@ -5,8 +5,8 @@ import os
 import gobject
 
 image_dir = 'images'
-interval = 2000
-maxium = 5
+interval = 5000
+maxium = 50
 width = 1024
 height = 768
 
@@ -47,7 +47,7 @@ class Slideshow:
         if len(self.imageviews) < maxium:
             return;
 
-        views = self.imageviews[maxium:]
+        views = self.imageviews[:-1*maxium]
         for v in views:
             self.imageviews.remove(v)
             v.destroy()
